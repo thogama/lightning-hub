@@ -5,7 +5,7 @@ import { LightningRpcService } from "./lightning-rpc.service";
 export class LightningRpcController {
     constructor(private readonly lightninRpc: LightningRpcService) { }
 
-    @Get()
+    @Get('info')
     async getInfo(): Promise<any> {
         const data = await this.lightninRpc.getNodeInfo();
         return data;
@@ -15,7 +15,6 @@ export class LightningRpcController {
         const data = await this.lightninRpc.allInvoices();
         return data;
     }
-
     @Post()
     async createInvoice(@Body() body: { value: number, memo: string }): Promise<any> {
         const data = await this.lightninRpc.createInvoice(body.value, body.memo);
@@ -32,9 +31,4 @@ export class LightningRpcController {
         return data;
     }
 
-    @Post("fund")
-    async fundWallet(@Body() body: { amount: number }): Promise<any> {
-        const data = await this.lightninRpc.fundWallet(body.amount);
-        return data;
-    }
 }

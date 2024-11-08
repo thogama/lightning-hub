@@ -1,43 +1,55 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import * as fs from 'fs';
-import * as path from 'path';
 import { Connection, Model } from 'mongoose';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Invoice } from 'src/schemas/invoice';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class LightningRpcService {
+export class LightningRpcService implements OnModuleInit {
     private client: any;
 
     constructor(
         @InjectModel('invoices') private readonly invoiceModel: Model<Invoice>,
-    ) {
+        private readonly configService: ConfigService,
+    ) { }
 
+
+    onModuleInit() {
         const packageDefinition = protoLoader.loadSync("src/lightning-rpc/lightning.proto", {
             keepCase: true,
             longs: String,
             defaults: true,
             oneofs: true,
         });
+        try{
 
-        const lnrpc = grpc.loadPackageDefinition(packageDefinition).lnrpc;
+            const lnrpc = grpc.loadPackageDefinition(packageDefinition).lnrpc;
+            
+            const tlsCertPath = this.configService.get<string>('LND_TLS_PATH');
+            const macaroonPath = this.configService.get<string>('LND_MACAROON_PATH');
+            
+            const macaroon = fs.readFileSync(macaroonPath).toString('hex');
+            const macaroonCreds = grpc.credentials.createFromMetadataGenerator((args, callback) => {
+                const metadata = new grpc.Metadata();
+                metadata.add('macaroon', macaroon);
+                callback(null, metadata);
+            });
+            const grpcCreds = grpc.credentials.createSsl(fs.readFileSync(tlsCertPath));
+            const creds = grpc.credentials.combineChannelCredentials(grpcCreds, macaroonCreds);
+            // @ts-ignore
+            this.client = new lnrpc.Lightning('localhost:10009', creds);
+        } catch (err) {
+            Logger.error("Error initializing Lightning RPC client", err);
+            
+        }
 
-        const tlsCertPath = path.join(process.env.HOME, 'AppData', 'Local', 'Lnd', 'tls.cert');
-        const macaroonPath = path.join(process.env.HOME, 'AppData', 'Local', 'Lnd', 'data', 'chain', 'bitcoin', 'testnet', 'admin.macaroon');
+    }
 
-        const macaroon = fs.readFileSync(macaroonPath).toString('hex');
-        const macaroonCreds = grpc.credentials.createFromMetadataGenerator((args, callback) => {
-            const metadata = new grpc.Metadata();
-            metadata.add('macaroon', macaroon);
-            callback(null, metadata);
-        });
-        const grpcCreds = grpc.credentials.createSsl(fs.readFileSync(tlsCertPath));
-        const creds = grpc.credentials.combineChannelCredentials(grpcCreds, macaroonCreds);
-        // @ts-ignore
-        this.client = new lnrpc.Lightning('localhost:10009', creds);
-
+    public getClient(): any {
+        return this.client;
     }
 
     getNodeInfo() {
@@ -111,39 +123,54 @@ export class LightningRpcService {
             throw new Error("Invoice não encontrado");
         }
 
-        let call = this.client.sendPayment({
-            payment_request: payment_request,
-            fee_limit_msat: 0,
-            amount_msat: amount,
-            allow_self_payment: true,
-        });
+        return new Promise((resolve, reject) => {
+            // Enviar pagamento com parâmetros ajustados
+            const call = this.client.sendPayment({
+                payment_request: payment_request,
+                fee_limit_msat: 1000, // Exemplo de limite de taxa de pagamento
+                amt: amount, // Defina o valor do pagamento
+                allow_self_payment: true,
+            });
 
-        call.on('data', function (response) {
-            console.log("Resposta de pagamento:", response);
-        });
+            // Escutando o evento de dados (dados da resposta)
+            call.on('data', (response: any) => {
+                console.log("Resposta de pagamento:", response);
+                if (response.payment_error) {
+                    // Caso ocorra erro no pagamento
+                    return reject(new Error(`Erro de pagamento: ${response.payment_error}`));
+                }
+            });
 
-        call.on('status', function (status) {
-            console.log("Status final do pagamento:", status);
-        });
+            // Escutando o status final da transação
+            call.on('status', (status: any) => {
+                console.log("Status final do pagamento:", status);
+            });
 
-        call.on('end', function () {
-            console.log("Stream de pagamento encerrado.");
-        });
+            // Escutando quando o stream de pagamento é encerrado
+            call.on('end', () => {
+                console.log("Stream de pagamento encerrado.");
+                resolve("Pagamento finalizado com sucesso.");
+            });
 
-        call.on('error', function (err) {
-            console.error("Erro durante o pagamento:", err.message);
-        });
+            // Escutando erro durante o pagamento
+            call.on('error', (err: any) => {
+                console.error("Erro durante o pagamento:", err.message);
+                reject(new Error(`Erro durante o pagamento: ${err.message}`));
+            });
 
-        call.write({
-            payment_request: payment_request,
-            fee_limit_msat: 0,
-            amount_msat: amount,
-            allow_self_payment: true,
-        });
+            // Envia a solicitação de pagamento
+            call.write({
+                payment_request: payment_request,
+                fee_limit_msat: 1000, // Taxa limite em msat
+                amt: amount,
+                allow_self_payment: true, // Permitir pagamento para si mesmo
+            });
 
-        // Encerra o stream depois de enviar o pedido
-        call.end();
+            // Encerra o stream depois de enviar o pedido
+            call.end();
+        });
     }
+
 
 
     async allPayments() {
@@ -156,13 +183,6 @@ export class LightningRpcService {
         })
     }
 
-    async fundWallet(amount: number) {
-        this.client.fundWallet({ include_incomplete: true }, (error, response) => {
-            if (error) {
-                console.error("Error fetching payments:", error);
-                throw error;
-            }
-            return response;
-        })
-    }
+
+
 }
