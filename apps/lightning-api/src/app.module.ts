@@ -1,20 +1,23 @@
 import { Module } from '@nestjs/common';
 import { LightningRpcModule } from './lightning-rpc/lightning-rpc.module';
-import { LightningRpcController } from './lightning-rpc/lightning-rpc.controller';
 import { LndModule } from './lnd/lnd.module';
 import { ConfigModule } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
+import { MongooseModule, Schema } from '@nestjs/mongoose';
 import { WalletModule } from './wallet/wallet.module';
 import { WalletController } from './wallet/wallet.controller';
-
+import { ContractsModule } from './contracts/contracts.module';
+import { ContractsController } from './contracts/contracts.controller';
+import { SchemesModule } from '@app/schemes';
 @Module({
   imports: [
     LightningRpcModule,
     LndModule, ConfigModule.forRoot(),
-    MongooseModule.forRoot(process.env.MONGO_URI, { dbName: "dev" }),
-    WalletModule
+    MongooseModule.forRoot(process.env.MONGO_URI, { dbName: "lightning-api" }),
+    SchemesModule,
+    WalletModule,
+    ContractsModule
   ],
-  controllers: [LightningRpcController, WalletController],
+  controllers: [ WalletController, ContractsController],
 
 })
 export class AppModule {

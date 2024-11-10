@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { exec } from 'child_process';
 import * as path from 'path';
@@ -10,7 +10,7 @@ export class LndService implements OnModuleInit {
     constructor() { }
 
     onModuleInit() {
-        console.log('[LND] Module Initializing');
+        Logger.log('Starting LND','LND');
 
         this.setup();
     }
@@ -23,13 +23,13 @@ export class LndService implements OnModuleInit {
         // });
 
         lndProcess.stderr.on('data', (data) => {
-            console.error(data);
+            Logger.error(`${data}`,'LND');
         });
 
         lndProcess.on('exit', (code) => {
-            console.log(`[LND] process exited with code ${code}`);
+            Logger.error(`process exited with code ${code}`,'LND');
         });
-        console.log('[LND] Setup Complete');
+        Logger.log('LND Started','LND');
 
     }
 }

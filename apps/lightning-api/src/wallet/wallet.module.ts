@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { WalletService } from './wallet.service';
-import { LightningRpcModule } from 'src/lightning-rpc/lightning-rpc.module';
+import { LightningRpcModule } from '../lightning-rpc/lightning-rpc.module';
 
 @Module({
     imports: [LightningRpcModule],
