@@ -15,7 +15,7 @@ export class LightningRpcService implements OnModuleInit {
 
 
     onModuleInit() {
-        const packageDefinition = protoLoader.loadSync("apps/lightning-api/src/lightning-rpc/lightning.proto", {
+        const packageDefinition = protoLoader.loadSync("libs/lightning-rpc/src/lightning.proto", {
             keepCase: true,
             longs: String,
             defaults: true,
@@ -60,11 +60,13 @@ export class LightningRpcService implements OnModuleInit {
         });
     }
 
-
-    
-    
-
-    
-
-
+    async verifySignature({ signature, nonce, publicKey }: { signature: string; nonce: string; publicKey: string }): Promise<boolean> {
+        const response = await this.client.verifyMessage({
+          msg: nonce,
+          signature: signature,
+          pub_key: publicKey,
+        });
+        return response.valid;
+      }
 }
+

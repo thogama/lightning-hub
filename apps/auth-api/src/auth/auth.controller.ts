@@ -1,10 +1,11 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
-import { GoogleOauthGuard } from "../google-oauth/google-oauth.guard";
+import { Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { GoogleOauthGuard } from "../guards/google-oauth.guard";
+import { LightningAuthGuard } from '../guards/lightning.guard';
 
 @Controller('auth')
 export class AuthController {
 
-    @Get()
+    @Get('google')
     @UseGuards(GoogleOauthGuard)
     async googleAuth() { }
 
@@ -16,5 +17,15 @@ export class AuthController {
             message: req.user ? 'Usuário autenticado com sucesso' : 'Falha na autenticação',
             user: req.user,
         }
+    }
+
+    @Post('lightning')
+    @UseGuards(LightningAuthGuard)
+    async lightningAuth(@Req() req: any) {
+        return {
+            statusCode: req.user ? 200 : 401,
+            message: req.user ? 'Usuário autenticado com sucesso' : 'Falha na autenticação',
+            user: req.user,
+        };
     }
 }

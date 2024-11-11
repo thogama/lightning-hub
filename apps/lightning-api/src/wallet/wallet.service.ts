@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
-import { LightningRpcService } from "../lightning-rpc/lightning-rpc.service";
+import { LightningRpcService } from "@app/lightning-rpc/lightning-rpc.service";
 
 @Injectable()
 export class WalletService implements OnModuleInit {

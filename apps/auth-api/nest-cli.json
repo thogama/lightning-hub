@@ -1,0 +1,16 @@
+{
+  "projects": {
+    "lightning-rpc": {
+      "type": "library",
+      "root": "libs/lightning-rpc",
+      "entryFile": "index",
+      "sourceRoot": "libs/lightning-rpc/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/lightning-rpc/tsconfig.lib.json"
+      }
+    }
+  },
+  "compilerOptions": {
+    "webpack": true
+  }
+}

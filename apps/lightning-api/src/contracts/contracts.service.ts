@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { randomBytes, createHash } from 'crypto';
 import { Model } from 'mongoose';
-import { LightningRpcService } from '../lightning-rpc/lightning-rpc.service';
+import { LightningRpcService } from '@app/lightning-rpc/lightning-rpc.service';
 import { ContractDocument } from 'libs/schemes/schemas/contract';
 import { InvoiceDocument } from 'libs/schemes/schemas/invoice';
 

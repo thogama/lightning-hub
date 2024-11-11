@@ -79,7 +79,8 @@
       "<rootDir>/libs/"
     ],
     "moduleNameMapper": {
-      "^@app/schemes(|/.*)$": "<rootDir>/libs/schemes/src/$1"
+      "^@app/schemes(|/.*)$": "<rootDir>/libs/schemes/src/$1",
+      "^@app/lightning-rpc(|/.*)$": "<rootDir>/libs/lightning-rpc/src/$1"
     }
   }
 }

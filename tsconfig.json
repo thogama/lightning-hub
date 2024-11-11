@@ -26,6 +26,12 @@
       ],
       "@app/schemes/*": [
         "libs/schemes/src/*"
+      ],
+      "@app/lightning-rpc": [
+        "libs/lightning-rpc/src"
+      ],
+      "@app/lightning-rpc/*": [
+        "libs/lightning-rpc/src/*"
       ]
     }
   }

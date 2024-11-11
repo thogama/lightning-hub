@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { LightningRpcModule } from './lightning-rpc/lightning-rpc.module';
+import { LightningRpcModule } from '@app/lightning-rpc/lightning-rpc.module';
 import { LndModule } from './lnd/lnd.module';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule, Schema } from '@nestjs/mongoose';
