@@ -9,7 +9,7 @@ export class LightningRpcService implements OnModuleInit {
     private client: any;
 
     constructor(
-        
+
         private readonly configService: ConfigService,
     ) { }
 
@@ -21,13 +21,13 @@ export class LightningRpcService implements OnModuleInit {
             defaults: true,
             oneofs: true,
         });
-        try{
+        try {
 
             const lnrpc = grpc.loadPackageDefinition(packageDefinition).lnrpc;
-            
+
             const tlsCertPath = this.configService.get<string>('LND_TLS_PATH');
             const macaroonPath = this.configService.get<string>('LND_MACAROON_PATH');
-            
+
             const macaroon = fs.readFileSync(macaroonPath).toString('hex');
             const macaroonCreds = grpc.credentials.createFromMetadataGenerator((args, callback) => {
                 const metadata = new grpc.Metadata();
@@ -40,7 +40,7 @@ export class LightningRpcService implements OnModuleInit {
             this.client = new lnrpc.Lightning('localhost:10009', creds);
         } catch (err) {
             Logger.error("Error initializing Lightning RPC client", err);
-            
+
         }
 
     }
@@ -49,7 +49,7 @@ export class LightningRpcService implements OnModuleInit {
         return this.client;
     }
 
-    getNodeInfo() {
+    getInfo() {
         return new Promise((resolve, reject) => {
             this.client.GetInfo({}, (error, response) => {
                 if (error) {
@@ -60,13 +60,18 @@ export class LightningRpcService implements OnModuleInit {
         });
     }
 
-    async verifySignature({ signature, nonce, publicKey }: { signature: string; nonce: string; publicKey: string }): Promise<boolean> {
-        const response = await this.client.verifyMessage({
-          msg: nonce,
-          signature: signature,
-          pub_key: publicKey,
+    verifySignature({ signature, nonce }) {
+        return new Promise((resolve, reject) => {
+            this.client.VerifyMessage({
+                msg: Buffer.from(nonce),
+                signature: signature,
+            }, (error, response) => {
+                if (error || !response.valid) {
+                    console.log(response)
+                    return reject(error);
+                }
+                resolve(response);
+            });
         });
-        return response.valid;
-      }
+    }
 }
-

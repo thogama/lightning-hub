@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Contract, ContractSchema } from '../schemas/contract';
 import { Invoice, InvoiceSchema } from '../schemas/invoice';
-import { User, UserSchema } from '../schemas/user';
+import {  UserSchema } from '../schemas/user';
 
 @Module({
   imports: [

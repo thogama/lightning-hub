@@ -9,7 +9,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     super({
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: 'http://localhost:3000/auth/google-redirect',
+      callbackURL: 'http://localhost:3001/auth/google-redirect',
       scope: ['email'],
     });
 
@@ -21,9 +21,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: any,
     done: VerifyCallback,
   ): Promise<any> {
-    console.log(profile, accessToken, refreshToken)
-    done(null, {
-      accessToken, refreshToken
-    });
+    done(null,
+      {
+        profile,
+        accessToken,
+        refreshToken
+      });
   }
 }

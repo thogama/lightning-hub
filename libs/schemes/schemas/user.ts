@@ -6,28 +6,26 @@ export type UserDocument = HydratedDocument<User>;
 
 @Schema({ timestamps: true })
 export class User {
-
-    // Para login tradicional com username e senha
     @Prop({ required: false, unique: true })
-    username?: string;  // Nome de usuário único, opcional para OAuth, obrigatório para login tradicional
+    oauthId?: string; 
 
     @Prop({ required: false })
-    passwordHash?: string;  // Hash da senha, opcional para OAuth, obrigatório para login tradicional
+    provider?: string; 
 
-    // Para login via OAuth (Google)
     @Prop({ required: false, unique: true })
-    oauthId?: string;  // ID único fornecido pelo Google (ou outro provedor OAuth)
+    email?: string;  
+
+    @Prop({ required: false, unique: true })
+    pubKey?: string; 
+
+    @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Contract' }] })
+    contracts: Contract[];
 
     @Prop({ required: false })
-    provider?: string;  // Nome do provedor OAuth (por exemplo, 'google')
+    name?: string;
 
     @Prop({ required: false })
-    email?: string;  // Opcional, pode ser fornecido pelo provedor OAuth
-
-
-    @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contract' }] })
-    contracts: Contract[]; 
-
+    avatarUrl?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
