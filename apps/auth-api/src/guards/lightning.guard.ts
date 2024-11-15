@@ -11,5 +11,10 @@ export class LightningAuthGuard extends AuthGuard('lightning') implements CanAct
     return super.canActivate(context);
   }
 
-  
+  constructor(private configService: ConfigService) {
+    super({
+      accessType: 'offline',
+      
+    });
+  }
 }

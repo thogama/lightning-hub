@@ -25,11 +25,7 @@ export class AuthController {
     @Post('lightning')
     @UseGuards(LightningAuthGuard)
     async lightningAuth(@Req() req: any) {
-        return {
-            statusCode: req.user ? 200 : 401,
-            message: req.user ? 'Usuário autenticado com sucesso' : 'Falha na autenticação',
-            user: req.user,
-        };
+        return this.authService.createUserOnFirstLoginLightning(req.user);
     }
 
     @Get('lightning')

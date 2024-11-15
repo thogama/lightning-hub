@@ -27,25 +27,30 @@ export class AuthService {
             await newUser.save();
         }
 
-        const accessToken = this.jwtService.sign(profile);
-        const refreshToken = this.jwtService.sign(profile, { expiresIn: '7d' });
+        const accessToken = this.jwtService.sign(profile, { secret: process.env.JWT_SECRET });
+        const refreshToken = this.jwtService.sign(profile, { secret: process.env.JWT_SECRET, expiresIn: '7d' });
 
         return { accessToken, refreshToken }
     }
 
     async createUserOnFirstLoginLightning(user: any) {
-        const existingUser = await this.userModel.findOne({ pubKey: user.publicKey });
-        if (!existingUser) {
-            const newUser = new this.userModel({
-                pubKey: user.publicKey,
-            })
-            await newUser.save();
-        }
-        const accessToken = this.jwtService.sign({ publicKey: user.publicKey });
-        const refreshToken = this.jwtService.sign({ publicKey: user.publicKey }, { expiresIn: '7d' });
-        return {
-            accessToken,
-            refreshToken
+        if (user.valid) {
+
+            const existingUser = await this.userModel.findOne({ pubKey: user.publicKey });
+            if (!existingUser) {
+                const newUser = new this.userModel({
+                    pubKey: user.publicKey,
+                })
+                await newUser.save();
+            }
+            const accessToken = this.jwtService.sign({ publicKey: user.publicKey }, { secret: process.env.JWT_SECRET });
+            const refreshToken = this.jwtService.sign({ publicKey: user.publicKey }, { secret: process.env.JWT_SECRET });
+            return {
+                accessToken,
+                refreshToken
+            }
+        } else {
+            return { error: 'Invalid signature' }
         }
     }
 

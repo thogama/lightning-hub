@@ -14,6 +14,7 @@ export class GoogleOauthGuard extends AuthGuard('google') implements CanActivate
   constructor(private configService: ConfigService) {
     super({
       accessType: 'offline',
+      
     });
   }
 }
