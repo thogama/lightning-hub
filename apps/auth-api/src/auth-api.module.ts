@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AuthApiController } from './auth-api.controller';
-import { AuthApiService } from './auth-api.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth/auth.controller';
 import { AuthModule } from './auth/auth.module';
@@ -17,8 +15,12 @@ import { JwtModule } from '@nestjs/jwt';
     ConfigModule.forRoot(),
     MongooseModule.forRoot(process.env.MONGO_URI, { dbName: "lightning-api" }),
     SchemesModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '60s' },
+    }),
   ],
-  controllers: [AuthApiController, AuthController],
-  providers: [AuthApiService, GoogleStrategy, LightningStrategy, LightningRpcService],
+  controllers: [AuthController],
+  providers: [ GoogleStrategy, LightningStrategy, LightningRpcService],
 })
 export class AuthApiModule { }

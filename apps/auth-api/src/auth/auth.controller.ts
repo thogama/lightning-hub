@@ -3,13 +3,13 @@ import { GoogleOauthGuard } from "../guards/google-oauth.guard";
 import { LightningAuthGuard } from '../guards/lightning.guard';
 import { randomBytes } from 'crypto';
 import { AuthService } from './auth.service';
+import { MessagePattern } from '@nestjs/microservices';
 
 @Controller('auth')
 export class AuthController {
 
-    constructor(private readonly authService: AuthService) {     
+    constructor(private readonly authService: AuthService) {
     }
-
     @Get('google')
     @UseGuards(GoogleOauthGuard)
     googleAuth() {
@@ -35,4 +35,16 @@ export class AuthController {
         return challenge
     }
 
+    @Post('refresh')
+    async refreshToken(@Body() body: any) {
+        return this.authService.refreshToken(body);
+    }
+
+    @MessagePattern({ cmd: 'validate_token' })
+    async validateToken() {
+        return {
+            valid: true
+        }
+       
+    }
 }

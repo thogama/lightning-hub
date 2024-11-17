@@ -16,6 +16,8 @@ export class AuthService {
     async createUserOnFirstLoginGoogle(user: any) {
         const profile = user.profile;
         const existingUser = await this.userModel.findOne({ email: profile.emails[0].value });
+        const refreshToken = this.jwtService.sign(profile, { secret: process.env.JWT_SECRET, expiresIn: '7d' });
+
         if (!existingUser) {
             const newUser = new this.userModel({
                 email: profile.emails[0].value,
@@ -25,32 +27,77 @@ export class AuthService {
                 avatarUrl: profile.photos[0].value
             })
             await newUser.save();
+        } else {
+            existingUser.refreshToken = refreshToken
+            await existingUser.save()
         }
 
         const accessToken = this.jwtService.sign(profile, { secret: process.env.JWT_SECRET });
-        const refreshToken = this.jwtService.sign(profile, { secret: process.env.JWT_SECRET, expiresIn: '7d' });
 
-        return { accessToken, refreshToken }
+        return { accessToken }
     }
 
     async createUserOnFirstLoginLightning(user: any) {
         if (user.valid) {
 
             const existingUser = await this.userModel.findOne({ pubKey: user.publicKey });
+            const refreshToken = this.jwtService.sign({ publicKey: user.publicKey }, { secret: process.env.JWT_SECRET });
+
             if (!existingUser) {
                 const newUser = new this.userModel({
                     pubKey: user.publicKey,
+                    refreshToken: refreshToken
                 })
                 await newUser.save();
+
+            } else {
+                existingUser.refreshToken = refreshToken
+                await existingUser.save();
             }
             const accessToken = this.jwtService.sign({ publicKey: user.publicKey }, { secret: process.env.JWT_SECRET });
-            const refreshToken = this.jwtService.sign({ publicKey: user.publicKey }, { secret: process.env.JWT_SECRET });
             return {
-                accessToken,
-                refreshToken
+                accessToken
             }
         } else {
             return { error: 'Invalid signature' }
+        }
+    }
+    async refreshToken(body: any) {
+        const refreshToken = body.refreshToken;
+        if (!refreshToken) {
+            return { error: 'No refresh token provided' };
+        }
+        try {
+            const user = await this.userModel.findOne({ refreshToken }).exec();
+
+            if (!user) {
+                return { error: 'Invalid refresh token' };
+            }
+
+            const decoded = this.jwtService.verify(refreshToken, { secret: process.env.JWT_SECRET });
+
+            const accessToken = this.jwtService.sign({ publicKey: decoded.publicKey }, { secret: process.env.JWT_SECRET });
+
+            const newRefreshToken = this.jwtService.sign({ publicKey: decoded.publicKey }, { secret: process.env.JWT_SECRET });
+
+            if (decoded.provider == "lightning") {
+                await this.userModel.findOneAndUpdate({ pubKey: decoded.publicKey }, { refreshToken: newRefreshToken }).exec();
+            } else {
+                await this.userModel.findOneAndUpdate({ email: decoded.emails[0].value }, { refreshToken: newRefreshToken }).exec();
+            }
+
+            return { accessToken };
+        } catch (error) {
+            return { error: 'Invalid refresh token' };
+        }
+    }
+
+    async validateToken(token: string) {
+        try {
+            const decoded = this.jwtService.verify(token, { secret: process.env.JWT_SECRET });
+            return { valid: true, user: decoded };
+        } catch (error) {
+            return { valid: false };
         }
     }
 

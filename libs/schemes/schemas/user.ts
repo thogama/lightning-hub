@@ -22,6 +22,9 @@ export class User {
     contracts: Contract[];
 
     @Prop({ required: false })
+    refreshToken?: string;
+
+    @Prop({ required: false })
     name?: string;
 
     @Prop({ required: false })
