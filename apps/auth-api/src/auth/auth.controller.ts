@@ -3,24 +3,25 @@ import { GoogleOauthGuard } from "../guards/google-oauth.guard";
 import { LightningAuthGuard } from '../guards/lightning.guard';
 import { randomBytes } from 'crypto';
 import { AuthService } from './auth.service';
-import { MessagePattern } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 
 @Controller('auth')
 export class AuthController {
 
     constructor(private readonly authService: AuthService) {
     }
-    @Get('google')
+    @Get('google-login')
     @UseGuards(GoogleOauthGuard)
     googleAuth() {
         // initiates the google oauth flow
     }
 
-    @Get('google-redirect')
+    @Get('google')
     @UseGuards(GoogleOauthGuard)
-    googleAuthRedirect(@Req() req) {
+    googleAuthRedirect(@Req() req: any) {
         return this.authService.createUserOnFirstLoginGoogle(req.user);
     }
+    
 
     @Post('lightning')
     @UseGuards(LightningAuthGuard)
@@ -29,22 +30,21 @@ export class AuthController {
     }
 
     @Get('lightning')
-    @UseGuards()
-    async lightning(@Req() req: any) {
+    async lightning() {
         const challenge = randomBytes(32).toString('hex');
         return challenge
     }
 
-    @Post('refresh')
-    async refreshToken(@Body() body: any) {
-        return this.authService.refreshToken(body);
+    @Post('refresh-token')
+    async refreshToken(@Payload() payload: any) {
+        return this.authService.refreshToken(payload);
     }
 
-    @MessagePattern({ cmd: 'validate_token' })
-    async validateToken() {
+    @Post('validate-token')
+    async validateToken(@Payload() token: string) {
         return {
             valid: true
         }
-       
+
     }
 }

@@ -37,15 +37,15 @@ export class AuthService {
         return { accessToken }
     }
 
-    async createUserOnFirstLoginLightning(user: any) {
-        if (user.valid) {
+    async createUserOnFirstLoginLightning(payload: any) {
+        if (payload.valid) {
 
-            const existingUser = await this.userModel.findOne({ pubKey: user.publicKey });
-            const refreshToken = this.jwtService.sign({ publicKey: user.publicKey }, { secret: process.env.JWT_SECRET });
+            const existingUser = await this.userModel.findOne({ pubKey: payload.publicKey });
+            const refreshToken = this.jwtService.sign({ publicKey: payload.publicKey }, { secret: process.env.JWT_SECRET });
 
             if (!existingUser) {
                 const newUser = new this.userModel({
-                    pubKey: user.publicKey,
+                    pubKey: payload.publicKey,
                     refreshToken: refreshToken
                 })
                 await newUser.save();
@@ -54,7 +54,7 @@ export class AuthService {
                 existingUser.refreshToken = refreshToken
                 await existingUser.save();
             }
-            const accessToken = this.jwtService.sign({ publicKey: user.publicKey }, { secret: process.env.JWT_SECRET });
+            const accessToken = this.jwtService.sign({ publicKey: payload.publicKey }, { secret: process.env.JWT_SECRET });
             return {
                 accessToken
             }
@@ -62,8 +62,8 @@ export class AuthService {
             return { error: 'Invalid signature' }
         }
     }
-    async refreshToken(body: any) {
-        const refreshToken = body.refreshToken;
+    async refreshToken(payload: any) {
+        const refreshToken = payload.refreshToken;
         if (!refreshToken) {
             return { error: 'No refresh token provided' };
         }

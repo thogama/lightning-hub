@@ -1,12 +1,25 @@
-import { Injectable, ExecutionContext, CanActivate, Inject, UnauthorizedException } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
+import { Injectable, ExecutionContext, CanActivate, UnauthorizedException, Inject } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthApiGuard implements CanActivate {
-  constructor(
-    @Inject('AUTH_SERVICE') private readonly authApiClient: ClientProxy, 
-  ) {}
+
+  constructor(@Inject() private readonly configService: ConfigService) { }
+
+
+  authApi = this.configService.get<string>('AUTH_API');
+
+  private async validateTokenWithAuthApi(token: string) {
+    const response = await fetch(`${this.authApi}/auth/validate-token`, {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    })
+
+    const data = response.json();
+
+    return data
+  }
+
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -19,14 +32,14 @@ export class AuthApiGuard implements CanActivate {
     const token = authHeader.replace('Bearer ', '');
 
     try {
-   
+
       const authResponse = await this.validateTokenWithAuthApi(token);
-      console.log(authResponse);
+
       if (!authResponse.valid) {
         throw new UnauthorizedException('Invalid or expired token');
       }
 
-   
+
       request.user = authResponse.user;
       return true;
     } catch (err) {
@@ -34,14 +47,4 @@ export class AuthApiGuard implements CanActivate {
     }
   }
 
-  private validateTokenWithAuthApi(token: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      this.authApiClient
-        .send({ cmd: 'validate_token' }, { token })
-        .subscribe({
-          next: (response) => resolve(response),
-          error: (err) => reject(err),
-        });
-    });
-  }
 }
